@@ -1,0 +1,36 @@
+/****** Object:  FullTextCatalog [AW2008FullTextCatalog]    Script Date: 11/26/2013 8:13:34 AM ******/
+
+IF @@TRANCOUNT > 0 COMMIT TRANSACTION;
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ 
+CREATE FULLTEXT CATALOG [AW2008FullTextCatalog]WITH ACCENT_SENSITIVITY = ON
+AS DEFAULT
+
+GO
+
+CREATE FULLTEXT INDEX ON [HumanResources].[JobCandidate](
+[Resume] LANGUAGE [English])
+KEY INDEX [PK_JobCandidate_JobCandidateID]ON ([AW2008FullTextCatalog], FILEGROUP [PRIMARY])
+WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+
+GO
+
+CREATE FULLTEXT INDEX ON [Production].[Document](
+[Document] TYPE COLUMN [FileExtension] LANGUAGE [English], 
+[DocumentSummary] LANGUAGE [English])
+KEY INDEX [PK_Document_DocumentNode]ON ([AW2008FullTextCatalog], FILEGROUP [PRIMARY])
+WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+
+GO
+
+CREATE FULLTEXT INDEX ON [Production].[ProductReview](
+[Comments] LANGUAGE [English])
+KEY INDEX [PK_ProductReview_ProductReviewID]ON ([AW2008FullTextCatalog], FILEGROUP [PRIMARY])
+WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+
+GO

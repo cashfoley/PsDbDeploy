@@ -1,0 +1,9 @@
+
+IF @@TRANCOUNT > 0 COMMIT TRANSACTION;
+
+
+CREATE FULLTEXT INDEX ON [HumanResources].[JobCandidate](
+[Resume] LANGUAGE [English])
+KEY INDEX [PK_JobCandidate_JobCandidateID]ON ([AW2008FullTextCatalog], FILEGROUP [PRIMARY])
+WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+GO

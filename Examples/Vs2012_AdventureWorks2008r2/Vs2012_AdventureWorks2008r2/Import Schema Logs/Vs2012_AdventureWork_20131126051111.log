@@ -1,0 +1,76 @@
+11/25/2013 11:11:11 PM	This log contains information about the import schema operation into project 'Vs2012_AdventureWorks2008r2' on computer 'CASHTAB1' by user 'cash'.
+11/25/2013 11:11:11 PM	Import of database schema has started.
+11/25/2013 11:11:16 PM	Gathering database options
+11/25/2013 11:11:16 PM	Gathering users
+11/25/2013 11:11:16 PM	Gathering roles
+11/25/2013 11:11:16 PM	Gathering application roles
+11/25/2013 11:11:16 PM	Gathering role memberships
+11/25/2013 11:11:16 PM	Gathering filegroups
+11/25/2013 11:11:16 PM	Gathering full-text catalogs
+11/25/2013 11:11:16 PM	Gathering assemblies
+11/25/2013 11:11:16 PM	Gathering certificates
+11/25/2013 11:11:16 PM	Gathering asymmetric keys
+11/25/2013 11:11:16 PM	Gathering symmetric keys
+11/25/2013 11:11:16 PM	Gathering encrypted symmetric keys
+11/25/2013 11:11:16 PM	Gathering schemas
+11/25/2013 11:11:16 PM	Gathering XML schema collections
+11/25/2013 11:11:16 PM	Gathering user-defined data types
+11/25/2013 11:11:16 PM	Gathering user-defined types
+11/25/2013 11:11:16 PM	Gathering table types
+11/25/2013 11:11:16 PM	Gathering unique keys for table types
+11/25/2013 11:11:16 PM	Gathering primary keys for table types
+11/25/2013 11:11:16 PM	Gathering check constraints for table types
+11/25/2013 11:11:16 PM	Gathering default constraints for table types
+11/25/2013 11:11:16 PM	Gathering partition functions
+11/25/2013 11:11:16 PM	Gathering partition schemes
+11/25/2013 11:11:16 PM	Gathering functions
+11/25/2013 11:11:16 PM	Gathering encrypted functions
+11/25/2013 11:11:16 PM	Gathering aggregates
+11/25/2013 11:11:16 PM	Gathering procedures
+11/25/2013 11:11:16 PM	Gathering encrypted procedures
+11/25/2013 11:11:16 PM	Gathering tables
+11/25/2013 11:11:16 PM	Gathering primary keys
+11/25/2013 11:11:16 PM	Gathering unique constraints
+11/25/2013 11:11:16 PM	Gathering foreign keys
+11/25/2013 11:11:16 PM	Gathering default constraints
+11/25/2013 11:11:16 PM	Gathering check constraints
+11/25/2013 11:11:16 PM	Gathering views
+11/25/2013 11:11:16 PM	Gathering encrypted views
+11/25/2013 11:11:16 PM	Gathering indexes
+11/25/2013 11:11:16 PM	Gathering statistics
+11/25/2013 11:11:16 PM	Gathering full-text index stoplists
+11/25/2013 11:11:16 PM	Gathering search property lists
+11/25/2013 11:11:16 PM	Gathering search properties
+11/25/2013 11:11:16 PM	Gathering full-text indexes
+11/25/2013 11:11:16 PM	Gathering column store indexes
+11/25/2013 11:11:16 PM	Gathering spatial indexes
+11/25/2013 11:11:16 PM	Gathering XML indexes
+11/25/2013 11:11:16 PM	Gathering Selective XML indexes
+11/25/2013 11:11:16 PM	Gathering encrypted triggers
+11/25/2013 11:11:16 PM	Gathering triggers
+11/25/2013 11:11:16 PM	Gathering encrypted and clr ddl triggers
+11/25/2013 11:11:16 PM	Gathering ddl triggers
+11/25/2013 11:11:16 PM	Gathering synonyms
+11/25/2013 11:11:16 PM	Gathering defaults
+11/25/2013 11:11:16 PM	Gathering data constraint uddt bindings
+11/25/2013 11:11:16 PM	Gathering rules
+11/25/2013 11:11:16 PM	Gathering data constraint uddt bindings
+11/25/2013 11:11:16 PM	Gathering message types
+11/25/2013 11:11:16 PM	Gathering queues
+11/25/2013 11:11:16 PM	Gathering contracts
+11/25/2013 11:11:16 PM	Gathering services
+11/25/2013 11:11:16 PM	Gathering event notifications
+11/25/2013 11:11:16 PM	Gathering remote service bindings
+11/25/2013 11:11:16 PM	Gathering broker priorities
+11/25/2013 11:11:16 PM	Gathering signatures
+11/25/2013 11:11:16 PM	Gathering data compression options
+11/25/2013 11:11:16 PM	Gathering sequence types
+11/25/2013 11:11:16 PM	Gathering extended properties
+11/25/2013 11:11:17 PM	Gathering credentials
+11/25/2013 11:11:17 PM	Gathering logins
+11/25/2013 11:11:17 PM	Gathering server audits
+11/25/2013 11:11:18 PM	Scanning project for duplicate elements
+11/25/2013 11:11:18 PM	Finished duplicate element processing
+11/25/2013 11:11:22 PM	Finished importing database.
+11/25/2013 11:11:22 PM	A summary of the import was saved to the following location: C:\Projects\PsDbDeploy\Examples\Vs2012_AdventureWorks2008r2\Vs2012_AdventureWorks2008r2\Import Schema Logs\Vs2012_AdventureWork_20131126051111.log
+11/25/2013 11:11:22 PM	Click Finish to continue...

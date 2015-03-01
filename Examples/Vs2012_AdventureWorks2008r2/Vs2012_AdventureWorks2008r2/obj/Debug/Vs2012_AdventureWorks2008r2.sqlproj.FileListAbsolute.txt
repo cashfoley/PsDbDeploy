@@ -1,0 +1,9 @@
+C:\Git\psdbdeploy\examples\Vs2012_AdventureWorks2008r2\Vs2012_AdventureWorks2008r2\bin\Debug\Vs2012_AdventureWorks2008r2.dacpac
+C:\Git\psdbdeploy\examples\Vs2012_AdventureWorks2008r2\Vs2012_AdventureWorks2008r2\bin\Debug\Vs2012_AdventureWorks2008r2.dll
+C:\Git\psdbdeploy\examples\Vs2012_AdventureWorks2008r2\Vs2012_AdventureWorks2008r2\bin\Debug\Vs2012_AdventureWorks2008r2.pdb
+C:\Git\psdbdeploy\examples\Vs2012_AdventureWorks2008r2\Vs2012_AdventureWorks2008r2\obj\Debug\Model.xml
+C:\Git\psdbdeploy\examples\Vs2012_AdventureWorks2008r2\Vs2012_AdventureWorks2008r2\obj\Debug\refactor.xml
+C:\Git\psdbdeploy\examples\Vs2012_AdventureWorks2008r2\Vs2012_AdventureWorks2008r2\obj\Debug\postdeploy.sql
+C:\Git\psdbdeploy\examples\Vs2012_AdventureWorks2008r2\Vs2012_AdventureWorks2008r2\obj\Debug\predeploy.sql
+C:\Git\psdbdeploy\examples\Vs2012_AdventureWorks2008r2\Vs2012_AdventureWorks2008r2\obj\Debug\Vs2012_AdventureWorks2008r2.dll
+C:\Git\psdbdeploy\examples\Vs2012_AdventureWorks2008r2\Vs2012_AdventureWorks2008r2\obj\Debug\Vs2012_AdventureWorks2008r2.pdb
