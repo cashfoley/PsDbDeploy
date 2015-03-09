@@ -198,22 +198,36 @@ function get-XmlInsertSql($Patches,[switch]$IncludTimestamps)
         $PatchContext.NewSqlCommand()
         try
         {
-            $PatchContext.ExecuteNonQuery($PatchContext.Constants.BeginTransctionScript)
-            
-            $DisableFksSql = Get-FKSql $Patches -Disable
-            $PatchContext.ExecuteNonQuery($DisableFksSql)
-            
-            $InsertXmlSql = get-XmlInsertSql $Patches
-            $PatchContext.ExecuteNonQuery($InsertXmlSql)
-            
-            $EnableFksSql = Get-FKSql $Patches 
-            $PatchContext.ExecuteNonQuery($EnableFksSql)
+            function GoScript($script)
+            {
+                if ($script)
+                {
+                    $script + "`nGO`n"
+                }
+            }
+
+            $DataSqlBuilder = New-Object System.Text.StringBuilder
+            function appendQuery($sql)
+            {
+                foreach ($line in $sql)
+                {
+                    $DataSqlBuilder.AppendLine($line) | Out-Null
+                }
+            }
+
+            appendQuery (GoScript $PatchContext.Constants.BeginTransctionScript)
+            appendQuery (GoScript (Get-FKSql $Patches -Disable))
+            appendQuery (GoScript (get-XmlInsertSql $Patches))
+            appendQuery (GoScript (Get-FKSql $Patches))
+
             
             foreach($Patch in $Patches)
             {
-                $PatchContext.MarkPatchAsExecuted($Patch.PatchName, $Patch.Checksum, "")
+                appendQuery (GoScript ($PatchContext.GetMarkPatchAsExecutedString($Patch.PatchName, $Patch.Checksum, "")))
             }
-            $PatchContext.ExecuteNonQuery($PatchContext.Constants.EndTransactionScript) 
+            appendQuery (GoScript ($PatchContext.Constants.EndTransactionScript))
+
+            $PatchContext.ExecuteNonQuery($DataSqlBuilder.ToString())
         }
         Catch
         {
@@ -240,7 +254,7 @@ function get-XmlInsertSql($Patches,[switch]$IncludTimestamps)
 }
 
 # ----------------------------------------------------------------------------------
-function Get-XmlDbPatches
+function Add-XmlDbPatches
 {
     [CmdletBinding(
         SupportsShouldProcess=$True,ConfirmImpact=’Medium’
@@ -322,4 +336,4 @@ function Get-XmlDbPatches
     }
 }
 
-Export-ModuleMember -Function Get-XmlDbPatches
+Export-ModuleMember -Function Add-XmlDbPatches

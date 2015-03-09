@@ -46,7 +46,7 @@ BEGIN
         [Id]              INT             IDENTITY (1, 1) NOT NULL,
         [DbVersionId]     INT             NOT NULL,
         [FilePath]        CHAR (250)      NOT NULL,
-        [CheckSum]        CHAR (40)       NOT NULL,
+        [CheckSum]        CHAR (50)       NOT NULL,
         [Content]         NVARCHAR (MAX)  NOT NULL,
         [RollbackContent] NVARCHAR (MAX)  NULL,
         [RollbackId]      INT             NULL,

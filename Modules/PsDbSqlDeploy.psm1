@@ -140,82 +140,109 @@ function Add-SqlDbPatches
                 }
                 else
                 {
-                    $Checksum = $PatchContext.GetFileChecksum($PatchFile)
-                    Write-Verbose "`$Checksum: $Checksum"
+                    $Patch = $PatchContext.NewPatchObject($SqlPatcher,$PatchFile,$PatchName,$CheckPoint,$Comment,$false,$ExecuteOnce,$Force)
+
+                    Write-Verbose "`$Checksum: $Patch.Checksum"
 
                     $PatchCheckSum = [string]($PatchContext.GetChecksumForPatch($PatchName))
             
                     $ApplyPatch = $false
-                    if ($Checksum -ne $PatchCheckSum -or $Force)
+                    if ($Patch.Force)
                     {
-                        if ($ExecuteOnce -and ($PatchCheckSum -ne ''))
+                        Write-Verbose "Force Execution '$PatchName'" 
+                        $ApplyPatch=$true
+                    }
+                    elseif ($Patch.Checksum -ne $PatchCheckSum)
+                    {
+                        if ($Patch.Ignore)
+                        {
+                            Write-Verbose "Ignoring $PatchName"
+                        }
+                        elseif ($Patch.ExecuteOnce -and ($PatchCheckSum -ne ''))
                         {
                             Write-Warning "Patch $PatchName has changed but will be ignored"
                         }
                         else
                         {
                             $ApplyPatch = $true
-                            $BeforeEachPatchStr = ""
-                            $AfterEachPatchStr = ""
-
-                            $Patch = $PatchContext.NewPatchObject($SqlPatcher,$PatchFile,$PatchName,$Checksum,$CheckPoint,$Comment,"","")
-
-                            # Annoying use of multiple output
-                            # ParseSchemaAndObject verifies match and returns Match Keys.
-                            # No keys are a valid result on a match
-                            $ObjectKeys = @()
-                            if ($FileNamePattern)
-                            {
-                                Write-Verbose "Evaluate FilenamePattern '$FileNamePattern'"
-                                $ApplyPatch, $ObjectKeys = $PatchContext.ParseSchemaAndObject($PatchFile,$FileNamePattern)
-                                if (!$ApplyPatch)
-                                {
-                                    Write-Warning "FileNamePattern does not match patch '$PatchName' - Patch not executed"
-                                }
-                                else
-                                {
-                                    $BeforeEachPatchStr = $PatchContext.ReplacePatternValues($BeforeEachPatch, $ObjectKeys)
-                                    Write-Verbose "`BeforeEachPatch: $($BeforeEachPatchStr)"
-                                    $AfterEachPatchStr = $PatchContext.ReplacePatternValues($AfterEachPatch, $ObjectKeys)
-                                    Write-Verbose "`AfterEachPatch: $($AfterEachPatchStr)"
-                                }
-                            }
-                    
-                            if ($FileContentPattern -and $ApplyPatch)
-                            {
-                                Write-Verbose "Evaluate FileContentPattern '$FileContentPattern'"
-                                $ApplyPatch, $ObjectKeys = $PatchContext.ParseSchemaAndObject($Patch.PatchContent, $FileContentPattern)
-                                if (!$ApplyPatch)
-                                {
-                                    Write-Warning "FileContentPattern does not match content in patch '$PatchName' - Patch not executed"
-                                }
-                                else
-                                {
-                                    $BeforeEachPatchStr = $PatchContext.ReplacePatternValues($BeforeEachPatch, $ObjectKeys)
-                                    Write-Verbose "`BeforeEachPatch: $($BeforeEachPatchStr)"
-                                    $AfterEachPatchStr = $PatchContext.ReplacePatternValues($AfterEachPatch, $ObjectKeys)
-                                    Write-Verbose "`AfterEachPatch: $($AfterEachPatchStr)"
-                                }
-                            }
-
-                            function GoScript($script)
-                            {
-                                if ($script)
-                                {
-                                    $script + "`nGO`n"
-                                }
-                            }
-                            $Patch.PatchContent = (GoScript $PatchContext.Constants.BeginTransctionScript) + 
-                                                  (GoScript $BeforeEachPatchStr) + 
-                                                  (GoScript (ReplaceTokens $Patch.PatchContent)) + 
-                                                  (GoScript $AfterEachPatchStr) + 
-                                                  (GoScript $PatchContext.GetMarkPatchAsExecutedString($Patch.PatchName, $Patch.Checksum, "")) +
-                                                  (GoScript $PatchContext.Constants.EndTransactionScript)
                         }
                     }
                     else
                     {
-                        Write-Verbose "Patch $PatchName current" 
+                        Write-Verbose "Patch $PatchName is up to date"
+                    }
+
+                    if ($ApplyPatch)
+                    {
+                        $ApplyPatch = $true
+                        $BeforeEachPatchStr = ""
+                        $AfterEachPatchStr = ""
+
+
+                        # Annoying use of multiple output
+                        # ParseSchemaAndObject verifies match and returns Match Keys.
+                        # No keys are a valid result on a match
+                        $ObjectKeys = @()
+                        if ($FileNamePattern)
+                        {
+                            Write-Verbose "Evaluate FilenamePattern '$FileNamePattern'"
+                            $ApplyPatch, $ObjectKeys = $PatchContext.ParseSchemaAndObject($PatchFile,$FileNamePattern)
+                            if (!$ApplyPatch)
+                            {
+                                Write-Warning "FileNamePattern does not match patch '$PatchName' - Patch not executed"
+                            }
+                            else
+                            {
+                                $BeforeEachPatchStr = $PatchContext.ReplacePatternValues($BeforeEachPatch, $ObjectKeys)
+                                Write-Verbose "`BeforeEachPatch: $($BeforeEachPatchStr)"
+                                $AfterEachPatchStr = $PatchContext.ReplacePatternValues($AfterEachPatch, $ObjectKeys)
+                                Write-Verbose "`AfterEachPatch: $($AfterEachPatchStr)"
+                            }
+                        }
+                    
+                        if ($FileContentPattern -and $ApplyPatch)
+                        {
+                            Write-Verbose "Evaluate FileContentPattern '$FileContentPattern'"
+                            $ApplyPatch, $ObjectKeys = $PatchContext.ParseSchemaAndObject($Patch.PatchContent, $FileContentPattern)
+                            if (!$ApplyPatch)
+                            {
+                                Write-Warning "FileContentPattern does not match content in patch '$PatchName' - Patch not executed"
+                            }
+                            else
+                            {
+                                $BeforeEachPatchStr = $PatchContext.ReplacePatternValues($BeforeEachPatch, $ObjectKeys)
+                                Write-Verbose "`BeforeEachPatch: $($BeforeEachPatchStr)"
+                                $AfterEachPatchStr = $PatchContext.ReplacePatternValues($AfterEachPatch, $ObjectKeys)
+                                Write-Verbose "`AfterEachPatch: $($AfterEachPatchStr)"
+                            }
+                        }
+
+                        $ScriptBuilder = New-Object System.Text.StringBuilder
+                        function GoScript($script)
+                        {
+                            if ($script)
+                            {
+                                $ScriptBuilder.Append($script) | Out-Null
+                                $ScriptBuilder.Append("`nGO`n") | Out-Null
+                            }
+                        }
+
+                        if (! $Patch.NoTransaction)
+                        {
+                            GoScript $PatchContext.Constants.BeginTransctionScript
+                        }
+
+                        GoScript $BeforeEachPatchStr 
+                        GoScript (ReplaceTokens $Patch.PatchContent) 
+                        GoScript $AfterEachPatchStr 
+                        GoScript $PatchContext.GetMarkPatchAsExecutedString($Patch.PatchName, $Patch.Checksum, "")
+
+                        if (! $Patch.NoTransaction)
+                        {
+                            GoScript $PatchContext.Constants.EndTransactionScript
+                        }
+                                            
+                        $Patch.PatchContent = $ScriptBuilder.ToString()                        
                     }
 
                     if ($ApplyPatch -or $Force)

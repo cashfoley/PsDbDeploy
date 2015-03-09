@@ -246,7 +246,7 @@ EXEC [PsDbDeploy].[MarkPatchExecuted] @FilePath,@CheckSum,@Comment
 
         # ----------------------------------------------------------------------------------
         $ShaProvider = New-Object "System.Security.Cryptography.SHA1CryptoServiceProvider"
-        $MD5Provider = New-Object "System.Security.Cryptography.MD5CryptoServiceProvider"
+        $ChecksumPattern = "{0} {1:d7}"
         function GetFileChecksum ([System.IO.FileInfo] $fileInfo)
         {
             $file = New-Object "system.io.FileStream" ($fileInfo, [system.io.filemode]::Open, [system.IO.FileAccess]::Read)
@@ -254,13 +254,7 @@ EXEC [PsDbDeploy].[MarkPatchExecuted] @FilePath,@CheckSum,@Comment
             try
             {
                 $shaHash = [system.Convert]::ToBase64String($ShaProvider.ComputeHash($file))  
-                #$file.Position =0
-                #$md5Hash = [system.Convert]::ToBase64String($MD5Provider.ComputeHash($file))  
-
-                #Sample: md5:'KJ5/LZAAzMmOzHn7rowksg==' sha:'LNa8s47m0pa8BUPmy8QNQsc/vdc=' length:006822
-                #"md5:'{0}' sha:'{1}' length:{2:d6}" -f $md5Hash,$shaHash,$fileInfo.Length
-                
-                "{0} {1:d7}" -f $shaHash,$fileInfo.Length
+                $ChecksumPattern -f $shaHash,$fileInfo.Length
             }
             finally 
             {
@@ -268,6 +262,16 @@ EXEC [PsDbDeploy].[MarkPatchExecuted] @FilePath,@CheckSum,@Comment
             }
         }
         Export-ModuleMember -Function GetFileChecksum 
+
+        # ----------------------------------------------------------------------------------
+        function GetStringChecksum ([string] $StringValue)
+        {
+            $StringBuilder = New-Object System.Text.StringBuilder 
+            $ShaProvider.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($StringValue)) | `
+                %{[Void]$StringBuilder.Append($_.ToString("x2"))}
+            "{0} {1:d7}" -f $StringBuilder.ToString(),$StringValue.Length
+        }
+        Export-ModuleMember -Function GetStringChecksum 
 
         # ----------------------------------------------------------------------------------
         function GetChecksumForPatch($filePath)
@@ -404,21 +408,68 @@ EXEC [PsDbDeploy].[MarkPatchExecuted] @FilePath,@CheckSum,@Comment
         Export-ModuleMember -Function ReplacePatternValues 
 
         # ----------------------------------------------------------------------------------
-        function NewPatchObject($Patcher,$PatchFile,$PatchName,$Checksum,$CheckPoint,$Comment)
+        function NewPatchObject($Patcher,$PatchFile,$PatchName,$CheckPoint,$Comment,$NoTransaction=$false,$ExecuteOnce=$false,$force=$false)
         {
-            New-Object -TypeName PSObject -Property (@{
+            $patchContent = ([System.IO.File]::OpenText($PatchFile).readtoend())
+            $patchChecksum = GetStringChecksum $patchContent
+            $patch = New-Object -TypeName PSObject -Property (@{
                 Patcher = $Patcher
                 PatchFile = $PatchFile
                 PatchName = $PatchName
-                CheckSum = $CheckSum
                 Comment = $Comment
                 CheckPoint = $CheckPoint
-                PatchContent = Get-Content $PatchFile | Out-String
+                Ignore = $false
+                NoTransaction = $NoTransaction
+                PatchContent =  $patchContent
+                CheckSum = $patchChecksum
+                ExecuteOnce = $ExecuteOnce
+                Force = $force
                 #BeforeEachPatch = $BeforeEachPatch
                 #AfterEachPatch = $AfterEachPatch
                 PatchAttributes = @{}
                 #ErrorException = $null
                 }) 
+
+            function setPatchFlag ($patch, $parsedPatchName, $flagName)
+            {
+                if ($Patch.PatchName -eq $parsedPatchName)
+                {
+                    switch ($flagName)
+                    {
+                        'Ignore'        
+                        {
+                            $patch.Ignore = $true
+                             Write-Verbose "Patch Flag $flagName Applied."
+                             break;
+                        }
+                        'NoTransaction' 
+                        {
+                            $patch.NoTransaction = $true
+                             Write-Verbose "Patch Flag $flagName Applied."
+                             break;
+                        }
+                        'ExecuteOnce'   
+                        {
+                            $patch.ExecuteOnce = $true
+                             Write-Verbose "Patch Flag $flagName Applied."
+                             break;
+                        }
+                        'Force'         {$patch.ExecuteOnce = $true}
+                        Default {Throw "Invalid PsDbDeploy Patch Flag $flagName"}
+                    }
+                }
+                else
+                {
+                    Write-Verbose "Patch Flag $flagName not used.  $parsedPatchName is for different file."
+                }
+            }
+
+            $flagPattern = "\[(?'ParsedPatchName'.*?)]::(?'Flag'\w+)"
+
+            $flags = [System.Text.RegularExpressions.Regex]::Matches($patchContent,$flagPattern)
+            $flags | %{setPatchFlag $patch -parsedPatchName $_.Groups['ParsedPatchName'].Value -flagName $_.Groups['Flag'].Value }
+
+            $patch
         }	
         
         Export-ModuleMember -Function NewPatchObject 
