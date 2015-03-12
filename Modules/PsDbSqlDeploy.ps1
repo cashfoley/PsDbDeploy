@@ -10,51 +10,43 @@ function ReplaceTokens([string]$str)
     $str
 }
 
-
-
-$SqlPatcher = New-Module -AsCustomObject -ScriptBlock {
-    $PatchType = 'Sql'
-    Export-ModuleMember -Variable PatchType
-
-    $BatchExecution = $false
-    Export-ModuleMember -Variable BatchExecution
-
-    function PerformPatches
+function Perform-SqlPatches
+{
+    param
+    ( [parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
+        $Patches
+    , $WhatIfExecute = $True
+    )
+    process
     {
-        param
-        ( [parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
-          $Patches
-        , $WhatIfExecute = $True
-        )
-        process
+        foreach ($Patch in $Patches)
         {
-            foreach ($Patch in $Patches)
-            {
-                Write-Host $Patch.PatchName
+            #Write-PsDbDeployLog $Patch.PatchName
+            Write-Verbose $Patch.PatchName
                 
-                OutPatchFile $Patch.PatchName $Patch.patchContent
+            OutPatchFile $Patch.PatchName $Patch.patchContent
 
-                if (!$WhatIfExecute)
+            if (!$WhatIfExecute)
+            {
+                NewSqlCommand 
+                New-DbPatch -FilePath $Patch.PatchName -Checksum $Patch.Checksum -Content $Patch.patchContent
+                try
                 {
-                    NewSqlCommand 
-                    New-DbPatch -FilePath $Patch.PatchName -Checksum $Patch.Checksum -Content $Patch.patchContent
-                    try
-                    {
-                        ExecuteNonQuery  $Patch.patchContent 
-                        New-DbExecutionLog -FilePath $Patch.PatchName -Successful
-                    }
-                    Catch
-                    {
-                        ExecuteNonQuery $Constants.RollbackTransactionScript
-                        New-DbExecutionLog -FilePath $Patch.PatchName 
-                        throw $_
-                    }
+                    ExecuteNonQuery  $Patch.patchContent 
+                    New-DbExecutionLog -FilePath $Patch.PatchName -Successful
+                }
+                Catch
+                {
+                    ExecuteNonQuery $Constants.RollbackTransactionScript
+                    New-DbExecutionLog -FilePath $Patch.PatchName 
+                    throw $_
                 }
             }
         }
     }
-    Export-ModuleMember -Function PerformPatches 
 }
+
+$SqlPatcher = New-Object -TypeName PSObject -Property (@{PatchType = 'Sql';BatchExecution = $false})
 
 # ----------------------------------------------------------------------------------
 function Add-SqlDbPatches
@@ -234,7 +226,7 @@ function Add-SqlDbPatches
                         GoScript $BeforeEachPatchStr 
                         GoScript (ReplaceTokens $Patch.PatchContent) 
                         GoScript $AfterEachPatchStr 
-                        GoScript GetMarkPatchAsExecutedString $Patch.PatchName $Patch.Checksum ""
+                        GoScript (GetMarkPatchAsExecutedString $Patch.PatchName $Patch.Checksum "")
 
                         if (! $Patch.NoTransaction)
                         {

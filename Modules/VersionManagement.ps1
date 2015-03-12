@@ -101,8 +101,8 @@ COMMIT TRANSACTION;
 # ----------------------------------------------------------------------------------
 function AssurePsDbDeploy2
 {
-    $PatchContext.NewSqlCommand()
-    $PatchContext.ExecuteNonQuery($AssurePsDbDeployQuery2)
+    NewSqlCommand 
+    ExecuteNonQuery $AssurePsDbDeployQuery2
 }
 
 export-ModuleMember -Function AssurePsDbDeploy2
@@ -164,9 +164,9 @@ function ReadDbVersions
     param ([switch]$Force)
     if ($DbVersions.count -eq 0 -or $Force)
     {
-        $PatchContext.NewSqlCommand()
-        $PatchContext.SqlCommand.CommandText = $ReadDbVersions
-        $sqlReader = $PatchContext.SqlCommand.ExecuteReader()
+        NewSqlCommand 
+        $SqlCommand.CommandText = $ReadDbVersions
+        $sqlReader = $SqlCommand.ExecuteReader()
         try
         {
             while ($sqlReader.Read()) 
@@ -275,10 +275,10 @@ function SetDbVersion
     $CurrentDbVersion = GetCurrentDbVersion
     if (!$CurrentDbVersion -or $Version -ne $CurrentDbVersion.Version -or $Revision -ne $CurrentDbVersion.Revision)
     {
-        $PatchContext.NewSqlCommand(($InsertDbVersion -f $Version,$Revision,($Comment.Replace("'","''"))))
-        [void] $PatchContext.SqlCommand.ExecuteNonQuery()
-        $PatchContext.SqlCommand.CommandText = "SELECT @@IDENTITY"
-        $ID = $PatchContext.SqlCommand.ExecuteScalar()
+        NewSqlCommand ($InsertDbVersion -f $Version,$Revision,($Comment.Replace("'","''")))
+        [void] $SqlCommand.ExecuteNonQuery()
+        $SqlCommand.CommandText = "SELECT @@IDENTITY"
+        $ID = $SqlCommand.ExecuteScalar()
 
         $NewVersion = NewDbVersionObject -Id $id -Version $Version -Revision $Revision -Comment $Comment
         $Script:DbVersions += $NewVersion
@@ -321,8 +321,8 @@ function New-DbPatch($FilePath, $Checksum, [string]$Content, [switch]$RollBackTo
     if($RollBackToPatch){$RollbackFlag=1}else{$RollbackFlag=0}
 
     $pachSql = $InsertDbPatch -f $FilePath,$Checksum.Replace("'","''"),$Content.Replace("'","''"),$RollbackFlag,$RollbackConent.Replace("'","''")
-    $PatchContext.NewSqlCommand($pachSql)
-    [void] $PatchContext.SqlCommand.ExecuteNonQuery()
+    NewSqlCommand $pachSql
+    [void] $SqlCommand.ExecuteNonQuery()
 }
 export-ModuleMember -Function New-DbPatch
 
@@ -348,9 +348,9 @@ function New-DbExecutionLog($FilePath, [switch]$Successful, [string]$LogOutput)
     if($Successful){$SuccessfulFlag=1}else{$SuccessfulFlag=0}
 
     $ExecutionLogSql = $InsertExecutionLog -f $FilePath,$SuccessfulFlag,$LogOutput.Replace("'","''")
-    $PatchContext.NewSqlCommand($ExecutionLogSql)
+    NewSqlCommand $ExecutionLogSql
     
-    [void] $PatchContext.SqlCommand.ExecuteNonQuery()
+    [void] $SqlCommand.ExecuteNonQuery() 
 }
 export-ModuleMember -Function New-DbExecutionLog
 
