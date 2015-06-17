@@ -100,10 +100,10 @@ function Get-FKSql($Patches, [switch]$Disable)
     "PRINT N'################################################################################'`n"
     foreach ($Patch in $Patches)
     {
-        $SqlCommand.CommandText = $FksToTableQuery -f $Patch.PatchAttributes.SchemaName,$Patch.PatchAttributes.TableName
+        $PatchContext.SqlCommand.CommandText = $FksToTableQuery -f $Patch.PatchAttributes.SchemaName,$Patch.PatchAttributes.TableName
         "PRINT N'------------------------------------------------'"
         "`nPRINT N'$($ActionMessages[0]) FKs to {0}.{1}'" -f $Patch.PatchAttributes.SchemaName,$Patch.PatchAttributes.TableName
-        $sqlReader = $SqlCommand.ExecuteReader()
+        $sqlReader = $PatchContext.SqlCommand.ExecuteReader()
         try
         {
             while ($sqlReader.Read()) 
@@ -134,8 +134,8 @@ function get-XmlInsertSql($Patches,[switch]$IncludTimestamps)
         $TableFullName = "[{0}].[{1}]" -f $Patch.PatchAttributes.SchemaName,$Patch.PatchAttributes.TableName
         $ColumnNames = @()
         $ColumnDataTypes = @()
-        $SqlCommand.CommandText = $TableDefinitionSQL -f $Patch.PatchAttributes.SchemaName,$Patch.PatchAttributes.TableName
-        $sqlReader = $SqlCommand.ExecuteReader()
+        $PatchContext.SqlCommand.CommandText = $TableDefinitionSQL -f $Patch.PatchAttributes.SchemaName,$Patch.PatchAttributes.TableName
+        $sqlReader = $PatchContext.SqlCommand.ExecuteReader()
         try
         {
             while ($sqlReader.Read()) 
@@ -167,8 +167,8 @@ function get-XmlInsertSql($Patches,[switch]$IncludTimestamps)
 
         $LoadXmlDocumentSQL -f $Patch.PatchContent.trim().Replace("'","''")
 
-        $SqlCommand.CommandText = $TableHasIdentity -f $Patch.PatchAttributes.SchemaName,$Patch.PatchAttributes.TableName
-        $HasIdentity = $SqlCommand.ExecuteScalar()
+        $PatchContext.SqlCommand.CommandText = $TableHasIdentity -f $Patch.PatchAttributes.SchemaName,$Patch.PatchAttributes.TableName
+        $HasIdentity = $PatchContext.SqlCommand.ExecuteScalar()
         if ($HasIdentity -gt 0)
         {
             "SET IDENTITY_INSERT $TableFullName ON`n"
@@ -192,54 +192,55 @@ function get-XmlInsertSql($Patches,[switch]$IncludTimestamps)
         param
         ( [parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
             $Patches
+		, $PatchContext
         )
 
-        NewSqlCommand 
+        $PatchContext.NewSqlCommand()
         try
         {
-            function GoScript($script)
-            {
-                if ($script)
-                {
-                    $script + "`nGO`n"
-                }
-            }
-
-            $DataSqlBuilder = New-Object System.Text.StringBuilder
-            function appendQuery($sql)
-            {
-                foreach ($line in $sql)
-                {
-                    $DataSqlBuilder.AppendLine($line) | Out-Null
-                }
-            }
-
-            appendQuery (GoScript $Constants.BeginTransctionScript)
-            appendQuery (GoScript (Get-FKSql $Patches -Disable))
-            appendQuery (GoScript (get-XmlInsertSql $Patches))
-            appendQuery (GoScript (Get-FKSql $Patches))
-
+            $PatchContext.ExecuteNonQuery($PatchContext.Constants.BeginTransctionScript)
+            
+            $DisableFksSql = Get-FKSql $Patches -Disable
+            $PatchContext.ExecuteNonQuery($DisableFksSql)
+            
+            $InsertXmlSql = get-XmlInsertSql $Patches
+            $PatchContext.ExecuteNonQuery($InsertXmlSql)
+            
+            $EnableFksSql = Get-FKSql $Patches 
+            $PatchContext.ExecuteNonQuery($EnableFksSql)
             
             foreach($Patch in $Patches)
             {
-                appendQuery (GoScript (GetMarkPatchAsExecutedString $Patch.PatchName $Patch.Checksum ""))
+                $PatchContext.MarkPatchAsExecuted($Patch.PatchName, $Patch.Checksum, "")
             }
-            appendQuery (GoScript ($Constants.EndTransactionScript))
-
-            ExecuteNonQuery $DataSqlBuilder.ToString()
+            $PatchContext.ExecuteNonQuery($PatchContext.Constants.EndTransactionScript) 
         }
         Catch
         {
-            ExecuteNonQuery $Constants.RollbackTransactionScript
+            $PatchContext.ExecuteNonQuery($PatchContext.Constants.RollbackTransactionScript)
             throw $_
         }
     }
 
+    function PerformPatches_X
+    {
+        param
+        ( [parameter(Mandatory=$True,ValueFromPipeline=$True,Position=0)]
+            $Patches
+		, $PatchContext
+        )
+        begin
+        {
+        }
+        process
+        {
+        }
+    }
     Export-ModuleMember -Function PerformPatches 
 }
 
 # ----------------------------------------------------------------------------------
-function Add-XmlDbPatches
+function Get-XmlDbPatches
 {
     [CmdletBinding(
         SupportsShouldProcess=$True,ConfirmImpact=’Medium’
@@ -264,15 +265,15 @@ function Add-XmlDbPatches
                 $PatchFile = $PatchFile.Fullname
                 Write-Verbose "`$PatchFile: $PatchFile"
 
-                $PatchName = GetPatchName $PatchFile
+                $PatchName = $PatchContext.GetPatchName($PatchFile)
                 Write-Verbose "`$PatchName: $PatchName"
             
-                $Checksum = GetFileChecksum $PatchFile
+                $Checksum = $PatchContext.GetFileChecksum($PatchFile)
                 Write-Verbose "`$Checksum: $Checksum"
 
-                $PatchCheckSum = [string](GetChecksumForPatch $PatchName)
+                $PatchCheckSum = [string]($PatchContext.GetChecksumForPatch($PatchName))
             
-                $Patch = NewPatchObject $XmlLoadPatcher $PatchFile $PatchName $Checksum $CheckPoint
+                $Patch = $PatchContext.NewPatchObject($XmlLoadPatcher,$PatchFile,$PatchName,$Checksum,$CheckPoint)
                 $ApplyPatch = $false
                 if ($Checkpoint)
                 {
@@ -316,9 +317,9 @@ function Add-XmlDbPatches
         }
         Catch
         {
-            TerminalError $_
+            $PatchContext.TerminalError($_)
         }
     }
 }
 
-Export-ModuleMember -Function Add-XmlDbPatches
+Export-ModuleMember -Function Get-XmlDbPatches
