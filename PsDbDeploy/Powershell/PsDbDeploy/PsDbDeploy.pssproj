@@ -29,8 +29,8 @@
   <ItemGroup>
     <Compile Include="PsDbDeploy.psd1" />
     <Compile Include="PsDbDeploy.psm1" />
-    <Compile Include="scripts\Database\PsDbDatabase.ps1" />
-    <Compile Include="scripts\Database\SqlServerDatabase.ps1" />
+    <Compile Include="ClassScripts\Database\PsDbDatabase.ps1" />
+    <Compile Include="ClassScripts\PatchController.ps1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\libraries\PdDbDeploy\PdDbDeploy.csproj">
@@ -40,8 +40,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="scripts\" />
-    <Folder Include="scripts\Database\" />
+    <Folder Include="ClassScripts\" />
+    <Folder Include="ClassScripts\Database\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Target Name="Build" />
